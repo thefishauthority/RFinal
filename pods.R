@@ -6,7 +6,7 @@
 #Now first we read in our data set: 
 library(readxl)
 
-read_excel(file.choose()) #this didn't work because its a CSV
+#read_excel(file.choose()) #this didn't work because its a CSV
 pods=read.csv(file.choose())
 
 #check our file:
@@ -46,20 +46,29 @@ summary(species.pods)#this gives us a summary of each column and type- this df
 
 ddply(.data = pods, .variables = c("Species"), function(x){
   
-  Species.plots <- ggplot(data = pods, aes(x = Species, y= Abundance)) +
+  Abundance.Month.plots <- ggplot(data = pods, aes(x = Month, y= Abundance)) +
     geom_point() +
-    stat_smooth(method = "lm") +
-    ggtitle("Species at Sea Rim TX")
+    ggtitle("Abundance v Month")
   
-  png(file = paste0("Intro to R/",unique(pods$Species)), 
+  png(file = paste0("plots/", unique(pods$Species)), 
       width = 2.5, height = 2.5, units = "in", res = 150)
-  plot(xy.dne)
+  plot(Abundance.Month.plots)
   dev.off()
   
-}, .progress = "text", .inform = T)
+}, .progress = "text", .inform = T) #having issues with this
 
 
+Species.plots <- ggplot(data = pods, aes(x = Species, y= Abundance)) +
+  geom_point() +
+  stat_smooth(method = "lm") +
+  ggtitle("Species at Sea Rim TX")
+Species.plots
 
+Abundance.plots <- ggplot(data = pods, aes(x = Position, y= Abundance)) +
+  geom_point() +
+  ggtitle("Abundance v Postion")
+
+head(pods)
 
 
 
@@ -148,4 +157,34 @@ pods.pos.abund=ggplot(data=pods1, aes(x=Position))+
   geom_histogram()
 pods.pos.abund #so here you can see the grand position vs abundance
 
+#Lets manipulate the data a bit-
+#first subset the data for transect 1
+pods2=subset(x=pods1, subset=Transect_Num=="1")
+unique(pods2$Transect_Num)
+#Now get rid of transect number and environmental columns
+pods3=pods2[,c(1:2,4:6)]
+head(pods3)
+str(pods3)
+pods4=spread(data=pods3, key=Position, value=Abundance)
+head(pods4)
+pods4
+pods5=spread(data=pods3, key=Sex, value=Abundance)
+pods5 #a different way of looking at our data for the same position by sex
 
+#This gave us a cool new format with the Positions as columns
+model=aov(formula=Month~Sex, data=pods4)
+
+#So one of our questions- are sex class ratios different for each month? 
+#(yes, but prove it)
+unique(pods1$Abundance)
+unique(pods1$Month)
+head(pods1)
+tail(pods1)
+model=aov(formula=Month~Abundance, data=pods1)#this didnt work either?
+summary(model)
+
+#Test the effect of month on sex/ abundance
+
+model.1=aov(formula=Month~Sex, data=pods1) #this didn't work 
+#because the y is categorical
+summary(model.1)
