@@ -35,6 +35,48 @@ head(pods) #the empty column is gone
 #So what species do we have?
 unique(pods$Species) #5 unique species plus an empty value? 
 
+#What if we want to view the data by species?
+
+species.pods=pods[order(pods$Species),]
+species.pods
+unique(species.pods$Species) #so now our species are sorted alphabetically
+
+summary(species.pods)#this gives us a summary of each column and type- this df
+#is 7 characters too long as downloaded. 
+
+ddply(.data = pods, .variables = c("Species"), function(x){
+  
+  Species.plots <- ggplot(data = pods, aes(x = Species, y= Abundance)) +
+    geom_point() +
+    stat_smooth(method = "lm") +
+    ggtitle("Species at Sea Rim TX")
+  
+  png(file = paste0("Intro to R/",unique(pods$Species)), 
+      width = 2.5, height = 2.5, units = "in", res = 150)
+  plot(xy.dne)
+  dev.off()
+  
+}, .progress = "text", .inform = T)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ?subset
 pods1=subset(x=pods, subset = Species=='Lepidactylus')
 head(pods1)
@@ -46,4 +88,64 @@ new.species="Cryptohaustorius"
 pods1$Species=new.species
 head(pods1)
 
-#Now because this all worked, save your work in Github
+#Now because this all worked, save your work in Github (This has the commit message "hwody")
+#so now we have two data frames, pods for all species and pods1 for crypto
+
+
+library(dplyr)
+library(tidyverse)
+
+#lets convert our temperatures to F for context
+
+tempswap=function(x){ #another custom function
+  x=32+(x*9/5)
+    return(x)
+}
+
+tempswap(100) #okay so this function works
+
+farenheit= c()
+pods1$Temperature..=as.numeric(pods1$Temperature..)
+
+for(i in 1:length(pods1$Temperature..)){
+  farenheit=tempswap(pods1$Temperature..[i])
+  print(farenheit)
+} 
+
+#so lets try some summary of categories
+library(plyr)
+detach(tidyverse)
+detach(dplyr)
+
+pods.abund.summary=ddply(.data=pods1, 
+                            .variables=c("Month","Position"),
+                            .fun=summarise, mean.abund=mean(Abundance))
+pods.abund.summary #this makes an average abundance for each 
+                  #position for each month
+            #weirdly the months are out of order?
+
+#what about by sex class?
+pods.sex.summary=ddply(.data=pods1, 
+                       .variables=c("Month","Sex"),
+                       .fun=summarise, mean.abund=mean(Abundance))
+pods.sex.summary #this was really helpful- mean abundance for each month. 
+pods.sex.summary2=ddply(.data=pods1, 
+                       .variables=c("Month","Sex"),
+                       .fun=summarise, Abund=sum(Abundance), SD.Abund=sd(Abundance))
+pods.sex.summary2 #this is great! summarize each sex class per month
+#Remember to plot this 
+
+pods.sex=ggplot(data=pods1, aes(x=Sex, y=Abundance))+
+  geom_boxplot()
+pods.sex
+
+pods.sex2=ggplot(data=pods.sex.summary2, aes(x=Sex, y=Abund))+
+  geom_boxplot()
+pods.sex2 #now these two plots are similar but scaled differently- because of less points?
+
+#lets make a histogram 
+pods.pos.abund=ggplot(data=pods1, aes(x=Position))+
+  geom_histogram()
+pods.pos.abund #so here you can see the grand position vs abundance
+
+
